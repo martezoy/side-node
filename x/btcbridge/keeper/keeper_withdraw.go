@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"fmt"
+	"sort"
 
 	"lukechampine.com/uint128"
 
@@ -203,13 +204,20 @@ func (k Keeper) FilterSigningRequestsByStatus(ctx sdk.Context, req *types.QueryS
 		if signingRequest.Status == req.Status {
 			signingRequests = append(signingRequests, &signingRequest)
 		}
-		// pagination TODO: limit the number of signing requests
-		if len(signingRequests) >= 100 {
-			return true
-		}
+
 		return false
 	})
-	return signingRequests
+
+	// sort by sequence
+	sort.Slice(signingRequests, func(i int, j int) bool {
+		return signingRequests[i].Sequence < signingRequests[j].Sequence
+	})
+
+	if len(signingRequests) <= 100 {
+		return signingRequests
+	}
+
+	return signingRequests[0:100]
 }
 
 // filter SigningRequest by address with pagination
@@ -220,9 +228,9 @@ func (k Keeper) FilterSigningRequestsByAddr(ctx sdk.Context, req *types.QuerySig
 			signingRequests = append(signingRequests, &signingRequest)
 		}
 		// pagination TODO: limit the number of signing requests
-		if len(signingRequests) >= 100 {
-			return true
-		}
+		// if len(signingRequests) >= 100 {
+		// 	return true
+		// }
 		return false
 	})
 	return signingRequests
